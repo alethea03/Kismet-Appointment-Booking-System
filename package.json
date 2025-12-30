@@ -1,0 +1,44 @@
+{
+    "$schema": "https://www.schemastore.org/package.json",
+    "private": true,
+    "type": "module",
+    "name": "appointment-system",
+    "version": "1.0.0",
+    "main": "main.js",
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite",
+        "electron:start": "electron .",
+        "electron:build": "electron-builder"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.0.0",
+        "autoprefixer": "^10.4.23",
+        "axios": "^1.11.0",
+        "concurrently": "^9.0.1",
+        "electron": "^39.2.7",
+        "electron-builder": "^26.0.12",
+        "laravel-vite-plugin": "^2.0.0",
+        "postcss": "^8.5.6",
+        "tailwindcss": "^4.1.18",
+        "vite": "^7.0.7"
+    },
+    "build": {
+        "appId": "com.yourname.KismetBookingSystem",
+        "productName": "KismetBookingSystem",
+        "directories": {
+            "output": "dist_electron"
+        },
+        "win": {
+            "target": "nsis"
+        }
+    },
+    "dependencies": {
+        "chart.js": "^4.5.1",
+        "lucide-react": "^0.562.0",
+        "react": "^19.2.3",
+        "react-chartjs-2": "^5.3.1",
+        "react-dom": "^19.2.3",
+        "react-router-dom": "^7.11.0"
+    }
+}

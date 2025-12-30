@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.jsx';
+
+@theme {
+  /* Your custom brand kit variables */
+  --color-primary: #8D27DE;
+  --color-secondary: #D4AF37;
+  --color-brand-dark: #251032;
+  --color-neutral-cool: #E3D9E5;
+  --color-neutral-warm: #F9F6F0;
+
+  --font-sans:'Montserrat', system-ui;
+  --font-serif: 'Manison', serif;
+
+  --color-primary-border: #6B1EB3;
+  --color-secondary-border: #B18E2B;
+  --color-border-muted: #D1C4D4;
+}
+
+/* Set global defaults */
+body {
+  background-color: var(--color-neutral-warm);
+  color: var(--color-brand-dark);
+}

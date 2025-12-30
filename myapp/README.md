@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# Kismet-Appointment-Booking-System
-Kismet Appointment Booking System is a pre-made fully developed system for business clients and owners to purchase and own with its own Supabase database, built with Laravel, React Native, Electron, and Flask
-=======
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
@@ -61,4 +57,3 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
->>>>>>> a2f60dc (Initial commit of Kismet Booking System)

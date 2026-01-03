@@ -24,8 +24,8 @@
         "vite": "^7.0.7"
     },
     "build": {
-        "appId": "com.yourname.KismetBookingSystem",
-        "productName": "KismetBookingSystem",
+        "appId": "com.yourname.KismetAppointmentBookingSystem",
+        "productName": "Kismet Appointment Booking System",
         "directories": {
             "output": "dist_electron"
         },
@@ -35,6 +35,7 @@
     },
     "dependencies": {
         "chart.js": "^4.5.1",
+        "framer-motion": "^12.23.26",
         "lucide-react": "^0.562.0",
         "react": "^19.2.3",
         "react-chartjs-2": "^5.3.1",

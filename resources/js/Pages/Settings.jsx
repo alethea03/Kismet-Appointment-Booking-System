@@ -1,11 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Building2, Calendar, Clock, Briefcase, Users, UserCog, Bell, CreditCard, Palette, Shield, Database, Puzzle, Save, CheckCircle } from 'lucide-react';
 
 const Settings = () => {
     const [activeTab, setActiveTab] = useState('Business');
+    const [staffList, setStaffList] = useState([]);
+    const [newStaff, setNewStaff] = useState({ name: '', email: '' });
+    const [newService, setNewService] = useState({ name: '', duration_minutes: '' });
+    const [services, setServices] = useState([]);
+
+    const fetchStaff = async () => {
+        const res = await axios.get('http://127.0.0.1:5000/api/staff');
+        setStaffList(res.data);
+    };
+    const handleAddStaff = async (e) => {
+        e.preventDefault();
+        await axios.post('http://127.0.0.1:5000/api/staff', newStaff);
+        setNewStaff({ name: '', email: '' });
+        fetchStaff();
+    };
+
+    const handleAddService = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.post('http://127.0.0.1:5000/api/services', newService);
+            setNewService({ name: '', duration_minutes: '' });
+            const response = await axios.get('http://127.0.0.1:5000/api/services');
+            setServices(response.data);
+        } catch (err) {
+            console.error("Error adding service:", err);
+        }
+    };
+
+    useEffect(() => {
+            const fetchServices = async () => {
+                try {
+                    const response = await axios.get('http://127.0.0.1:5000/api/services');
+                    setServices(response.data);
+                } catch (err) {
+                    console.error("Failed to fetch services:", err);
+                }
+            };
+            fetchServices();
+        }, 
+    []);
+
     const sections = [
         { id: 'Business', icon: <Building2 size={18}/>, label: 'Business Profile' },
         { id: 'Appointments', icon: <Calendar size={18}/>, label: 'Appointment Rules' },
+        { id: 'Services', icon: <Puzzle size={18}/>, label: 'Services' },
         { id: 'Hours', icon: <Clock size={18}/>, label: 'Working Hours' },
         { id: 'Staff', icon: <UserCog size={18}/>, label: 'Staff Management' },
         { id: 'Communication', icon: <Bell size={18}/>, label: 'Communication' },
@@ -26,7 +69,6 @@ const Settings = () => {
             </div>
 
             <div className="flex flex-col md:flex-row gap-6 h-full overflow-hidden">
-                {/* Sidebar Navigation - Tablet/Desktop */}
                 <aside className="w-full md:w-64 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0">
                     {sections.map((tab) => (
                         <button
@@ -42,8 +84,6 @@ const Settings = () => {
                         </button>
                     ))}
                 </aside>
-
-                {/* Content Area */}
                 <div className="flex-1 bg-white rounded-3xl border border-border-muted shadow-sm overflow-y-auto p-8 custom-scrollbar">
                     {activeTab === 'Business' && (
                         <div className="space-y-6">
@@ -72,7 +112,58 @@ const Settings = () => {
                             </div>
                         </div>
                     )}
-
+                    {activeTab === 'Services' && (
+                            <div className="space-y-8 animate-in slide-in-from-right duration-300">
+                                <div className="flex justify-between items-center border-b pb-4">
+                                    <div>
+                                        <h2 className="text-xl font-bold text-brandDark">Service Menu</h2>
+                                        <p className="text-xs text-primary font-medium">Manage your offerings and durations</p>
+                                    </div>
+                                </div>
+                                <form onSubmit={handleAddService} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-6 bg-neutralWarm/30 rounded-3xl border border-dashed border-border-muted">
+                                    <input 
+                                        className="p-3 bg-white border border-border-muted rounded-xl text-sm font-bold" 
+                                        placeholder="Service Name (e.g. Haircut)" 
+                                        value={newService.name}
+                                        onChange={(e) => setNewService({...newService, name: e.target.value})}
+                                        required
+                                    />
+                                    <input 
+                                        type="number"
+                                        className="p-3 bg-white border border-border-muted rounded-xl text-sm font-bold" 
+                                        placeholder="Duration (Minutes)" 
+                                        value={services.duration_minutes}
+                                        onChange={(e) => setNewService({...newService, duration_minutes: e.target.value})}
+                                        required
+                                    />
+                                    <button type="submit" className="bg-primary text-white py-3 rounded-xl font-bold shadow-md hover:bg-primary/90 transition-all">
+                                        Add Service
+                                    </button>
+                                </form>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {services.map(service => (
+                                        <div key={service.id} className="p-5 bg-white border border-border-muted rounded-2xl shadow-sm hover:shadow-md transition-shadow group">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-secondary/20 rounded-xl flex items-center justify-center text-primary">
+                                                        <Puzzle size={20} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-brandDark group-hover:text-primary transition-colors">{service.name}</h4>
+                                                        <p className="text-xs text-brandDark/50 font-medium">{service.duration_minutes} Minutes</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button className="p-2 text-brandDark/30 hover:text-primary transition-colors">
+                                                        <Settings size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     {activeTab === 'Branding' && (
                         <div className="space-y-8">
                             <h2 className="text-xl font-bold text-brandDark border-b pb-4">Branding & UI Customization</h2>
@@ -100,7 +191,6 @@ const Settings = () => {
                             </div>
                         </div>
                     )}
-
                     {activeTab === 'Hours' && (
                         <div className="space-y-8 animate-in slide-in-from-right duration-300">
                             <div className="flex justify-between items-center border-b pb-4">
@@ -109,12 +199,9 @@ const Settings = () => {
                                     <Puzzle size={14} /> APPLY TO ALL DAYS
                                 </button>
                             </div>
-
-                            {/* Weekly Schedule */}
                             <div className="space-y-3">
                                 {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
                                     <div key={day} className="grid grid-cols-1 md:grid-cols-12 items-center gap-4 p-4 bg-neutralWarm/50 rounded-2xl border border-border-muted/50 hover:border-primary/30 transition-all">
-                                        {/* Day Toggle */}
                                         <div className="md:col-span-3 flex items-center gap-3">
                                             <div className="relative inline-flex h-6 w-11 items-center rounded-full bg-neutralCool cursor-pointer">
                                                 <input type="checkbox" className="sr-only peer" defaultChecked={day !== 'Sunday'} />
@@ -122,15 +209,11 @@ const Settings = () => {
                                             </div>
                                             <span className="font-bold text-brandDark">{day}</span>
                                         </div>
-
-                                        {/* Hours Input */}
                                         <div className="md:col-span-7 flex items-center gap-2">
                                             <input type="time" defaultValue="09:00" className="flex-1 p-2 bg-white border border-border-muted rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary" />
                                             <span className="text-brandDark/40 font-bold">to</span>
                                             <input type="time" defaultValue="18:00" className="flex-1 p-2 bg-white border border-border-muted rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-primary" />
                                         </div>
-
-                                        {/* Break/Split Shift Action */}
                                         <div className="md:col-span-2 flex justify-end">
                                             <button className="text-[10px] font-black text-brandDark/40 hover:text-primary uppercase tracking-widest bg-white px-3 py-1.5 rounded-lg border border-border-muted shadow-sm">
                                                 + Add Break
@@ -139,8 +222,6 @@ const Settings = () => {
                                     </div>
                                 ))}
                             </div>
-
-                            {/* Special Schedules & Holidays */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
                                 <div className="p-6 bg-white border border-border-muted rounded-3xl shadow-sm">
                                     <h3 className="text-sm font-black text-brandDark/40 uppercase mb-4 tracking-widest">Holidays & Blackout Dates</h3>
@@ -196,73 +277,85 @@ const Settings = () => {
                     )}
                     {activeTab === 'Staff' && (
                         <div className="space-y-8 animate-in slide-in-from-right duration-300">
-                            <div className="flex justify-between items-center border-b pb-4">
+                            {/* Header Section */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
                                 <div>
                                     <h2 className="text-xl font-bold text-brandDark">Staff Management</h2>
                                     <p className="text-xs text-primary font-medium">Manage team access and specialties</p>
                                 </div>
-                                <button className="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-primary/90 transition-all">
+                                {/* Minimal Backend Choice B: Feature placeholder */}
+                                <button 
+                                    onClick={() => alert("Bulk invite feature coming in v2.0!")}
+                                    className="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-primary/90 transition-all w-full sm:w-auto"
+                                >
                                     + INVITE TEAM MEMBER
                                 </button>
                             </div>
 
-                            {/* Staff Table/List */}
                             <div className="space-y-4">
-                                {[
-                                    { name: 'Alex Rivera', role: 'Admin', services: 'All Services', status: 'Active' },
-                                    { name: 'Jordan Wells', role: 'Staff', services: 'Haircut, Beard Trim', status: 'Active' }
-                                ].map((member, i) => (
-                                    <div key={i} className="bg-neutralWarm/30 border border-border-muted rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:bg-white hover:shadow-md transition-all">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20">
-                                                {member.name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-brandDark">{member.name}</p>
-                                                <div className="flex gap-2 mt-1">
-                                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tighter ${
-                                                        member.role === 'Admin' ? 'bg-secondary text-brandDark' : 'bg-neutralCool text-brandDark/60'
-                                                    }`}>
-                                                        {member.role}
-                                                    </span>
-                                                    <span className="text-[10px] font-bold text-brandDark/40 uppercase tracking-tighter self-center">
-                                                        {member.services}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <div className="text-right hidden md:block mr-4">
-                                                <p className="text-[10px] font-black text-brandDark/30 uppercase tracking-widest">Booking Limit</p>
-                                                <p className="text-xs font-bold text-brandDark">8 per day</p>
-                                            </div>
-                                            <button className="px-4 py-2 bg-white border border-border-muted rounded-xl text-xs font-bold text-brandDark hover:text-primary transition-colors">
-                                                Edit Permissions
-                                            </button>
-                                            <button className="p-2 text-brandDark/20 hover:text-red-500 transition-colors">
-                                                <Shield size={18} />
-                                            </button>
-                                        </div>
+                                {/* RESPONSIVE FORM: Stacks on mobile, row on desktop */}
+                                <form onSubmit={handleAddStaff} className="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-6">
+                                    <div className="sm:col-span-5">
+                                        <input 
+                                            className="w-full p-3 border border-neutralCool rounded-xl focus:ring-2 focus:ring-primary outline-none bg-white shadow-sm" 
+                                            placeholder="Name" 
+                                            value={newStaff.name}
+                                            onChange={(e) => setNewStaff({...newStaff, name: e.target.value})}
+                                            required
+                                        />
                                     </div>
-                                ))}
+                                    <div className="sm:col-span-5">
+                                        <input 
+                                            className="w-full p-3 border border-neutralCool rounded-xl focus:ring-2 focus:ring-primary outline-none bg-white shadow-sm" 
+                                            placeholder="Email" 
+                                            type="email"
+                                            value={newStaff.email}
+                                            onChange={(e) => setNewStaff({...newStaff, email: e.target.value})}
+                                            required
+                                        />
+                                    </div>
+                                    <button 
+                                        type="submit"
+                                        className="sm:col-span-2 bg-primary text-white p-3 rounded-xl font-bold hover:opacity-90 transition-opacity active:scale-95"
+                                    >
+                                        Add
+                                    </button>
+                                </form>
+
+                                {/* Staff List */}
+                                <div className="grid grid-cols-1 gap-3">
+                                    {staffList.map((member) => (
+                                        <div key={member.id} className="flex items-center justify-between p-4 bg-white border border-border-muted rounded-2xl shadow-sm">
+                                            <div className="min-w-0">
+                                                <p className="font-bold text-brandDark truncate">{member.name}</p>
+                                                <p className="text-xs text-brandDark/50 truncate">{member.email}</p>
+                                            </div>
+                                            <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase shrink-0 ml-2 ${
+                                                member.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                            }`}>
+                                                {member.is_active ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
-                            {/* Permissions Matrix Snippet */}
+                            {/* Security Note - Improved Padding for Mobile */}
                             <div className="p-6 bg-brandDark text-white rounded-3xl shadow-xl relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-8 opacity-10">
-                                    <UserCog size={120} />
+                                <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                                    <UserCog size={80} className="sm:w-[120px] sm:h-[120px]" />
                                 </div>
-                                <h3 className="text-sm font-black uppercase tracking-widest mb-2 text-secondary">Security Note</h3>
-                                <p className="text-sm opacity-80 max-w-md leading-relaxed">
-                                    Admins have full access to billing and system logs. Staff members can only view their own assigned calendar and customer contact details.
-                                </p>
+                                <div className="relative z-10">
+                                    <h3 className="text-sm font-black uppercase tracking-widest mb-2 text-secondary">Security Note</h3>
+                                    <p className="text-sm opacity-80 max-w-md leading-relaxed">
+                                        Admins have full access to billing and system logs. Staff members can only view their own assigned calendar and customer contact details.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     )}
                     {activeTab === 'Communication' && (
                         <div className="space-y-8 animate-in slide-in-from-right duration-300">
-                            {/* Header */}
                             <div className="flex justify-between items-center border-b pb-4">
                             <div>
                                 <h2 className="text-xl font-bold text-brandDark">Communication Center</h2>
@@ -279,8 +372,6 @@ const Settings = () => {
                                 </button>
                             </div>
                             </div>
-
-                            {/* Channels */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="p-4 rounded-2xl border border-border-muted bg-neutralWarm/40 flex flex-col justify-between">
                                 <div>
@@ -330,8 +421,6 @@ const Settings = () => {
                                 </div>
                             </div>
                             </div>
-
-                            {/* Automation Rules */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="bg-neutralWarm/40 p-6 rounded-3xl border border-border-muted flex flex-col justify-between">
                                 <div>
@@ -373,8 +462,6 @@ const Settings = () => {
                                 </div>
                             </div>
                             </div>
-
-                            {/* Template Editor */}
                             <div className="bg-white rounded-3xl border border-border-muted overflow-hidden shadow-sm">
                             <div className="bg-neutralCool/30 p-4 border-b border-border-muted flex gap-4">
                                 <button className="text-xs font-black text-primary border-b-2 border-primary pb-1">
@@ -431,7 +518,6 @@ const Settings = () => {
 
                     {activeTab === 'Payment' && (
                         <div className="space-y-8 animate-in slide-in-from-right duration-300">
-                            {/* Header */}
                             <div className="flex justify-between items-center border-b pb-4">
                             <div>
                                 <h2 className="text-xl font-bold text-brandDark">Payments & Billing</h2>
@@ -444,8 +530,6 @@ const Settings = () => {
                                 <span className="text-xs font-bold text-brandDark">PHP (₱)</span>
                             </div>
                             </div>
-
-                            {/* Gateways */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="p-6 bg-neutralWarm/40 rounded-3xl border border-border-muted space-y-4">
                                 <div className="flex justify-between items-center">
@@ -501,8 +585,6 @@ const Settings = () => {
                                 </div>
                             </div>
                             </div>
-
-                            {/* Deposits & fees */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="p-4 bg-white rounded-3xl border border-border-muted space-y-3">
                                 <h3 className="text-xs font-black text-brandDark/40 uppercase">Deposit required</h3>
@@ -549,8 +631,6 @@ const Settings = () => {
                                 </div>
                             </div>
                             </div>
-
-                            {/* Tax settings */}
                             <div className="p-6 bg-neutralWarm/40 rounded-3xl border border-border-muted space-y-4">
                             <div className="flex justify-between items-center">
                                 <div>
@@ -594,10 +674,9 @@ const Settings = () => {
                             </div>
                         </div>
                         )}
-
+                        
                         {activeTab === 'Security' && (
                         <div className="space-y-8 animate-in slide-in-from-right duration-300">
-                            {/* Header */}
                             <div className="flex justify-between items-center border-b pb-4">
                             <div>
                                 <h2 className="text-xl font-bold text-brandDark">Security & Access</h2>
@@ -609,8 +688,6 @@ const Settings = () => {
                                 LAST UPDATED: JUST NOW
                             </span>
                             </div>
-
-                            {/* Login & sessions */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="p-6 bg-neutralWarm/40 rounded-3xl border border-border-muted space-y-4">
                                 <h3 className="text-sm font-black text-brandDark/60 uppercase tracking-widest">Login security</h3>
@@ -667,8 +744,6 @@ const Settings = () => {
                                 </div>
                             </div>
                             </div>
-
-                            {/* Data & privacy */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="p-6 bg-white rounded-3xl border border-border-muted space-y-4">
                                 <h3 className="text-sm font-black text-brandDark/60 uppercase tracking-widest">Customer data</h3>
@@ -713,8 +788,6 @@ const Settings = () => {
                                 </button>
                             </div>
                             </div>
-
-                            {/* Security notice */}
                             <div className="p-6 bg-brandDark text-white rounded-3xl shadow-xl relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-8 opacity-10">
                                 <Shield size={120} />
@@ -728,8 +801,7 @@ const Settings = () => {
                             </p>
                             </div>
                         </div>
-                        )}
-
+                    )}
                 </div>
             </div>
         </div>

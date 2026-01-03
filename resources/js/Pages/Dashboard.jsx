@@ -1,31 +1,90 @@
-import React from 'react';
 import { Calendar, Clock, XCircle, DollarSign, Users, UserCheck, Plus, MessageSquare, AlertCircle, Activity, TrendingUp } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const Dashboard = () => {
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 1. FETCH Logic (Read)
+  const fetchAppointments = async () => {
+    try {
+      const res = await axios.get('http://127.0.0.1:5000/api/bookings');
+      setAppointments(res.data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Fetch failed", err);
+      setLoading(false);
+    }
+  };
+
+  const mockSchedule = [
+    {
+      id: 1,
+      time: '9:00 AM',
+      customer_name: 'John Doe',
+      date: '2026-01-03',
+    },
+    {
+      id: 2,
+      time: '10:30 AM',
+      customer_name: 'Jane Smith',
+      date: '2026-01-03',
+    },
+    {
+      id: 3,
+      time: '1:00 PM',
+      customer_name: 'Michael Brown',
+      date: '2026-01-03',
+    },
+    {
+      id: 4,
+      time: '3:30 PM',
+      customer_name: 'Alex Rivera',
+      date: '2026-01-03',
+    },
+  ];
+
+  useEffect(() => { fetchAppointments(); }, []);
+
+  // 2. DELETE Logic (Cancel)
+  const handleCancel = async (id) => {
+    if (window.confirm("Are you sure you want to cancel this appointment?")) {
+      try {
+        await axios.delete(`http://127.0.0.1:5000/api/bookings/${id}`);
+        fetchAppointments(); // Refresh list after deletion
+      } catch (err) {
+        alert("Error cancelling appointment: " + err.message);
+      }
+    }
+  };
+
+  // 3. derived data
+  const stats = {
+    total_appts: appointments.length,
+    revenue: appointments.length * 50,
+  };
+
+  // 👇 HERE is where the mock data is actually used
+  const schedule = appointments.length > 0 ? appointments : mockSchedule;
+
     return (
         <div className="animate-in fade-in duration-500 space-y-6">
-            {/* Header & Quick Actions */}
+
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-brandDark tracking-tight">Dashboard</h1>
                     <p className="text-primary font-bold">Welcome back! Here is what's happening today.</p>
                 </div>
-                <div className="flex gap-2 w-full md:w-auto">
-                    <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:bg-primary/90 transition-all">
-                        <Plus size={18} /> New Appointment
-                    </button>
-                    <button className="p-3 bg-white border border-border-muted rounded-2xl text-brandDark hover:bg-neutralWarm transition-all shadow-sm">
-                        <MessageSquare size={18} />
-                    </button>
-                </div>
+                <span className="bg-primary/10 text-primary text-[10px] px-2 py-1 rounded-lg font-black uppercase">
+                    {stats.total_appts} Total Appts
+                </span>
             </div>
-
-            {/* Top Metrics Row - Revenue, Customers, Staff */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                     { label: 'Revenue Today', value: '$420', sub: '+$1.2k this month', icon: <DollarSign />, color: 'text-green-600' },
-                    { label: 'Active Customers', value: '1,284', sub: '+12 this week', icon: <Users />, color: 'text-primary' },
+                    { label: 'Active Appointments', value: stats.total_appts, sub: '+12 this week', icon: <Users />, color: 'text-primary' },
                     { label: 'Staff On-Duty', value: '5/6', sub: '1 on break', icon: <UserCheck />, color: 'text-secondary-border' },
                     { label: 'System Status', value: 'Online', sub: 'All systems nominal', icon: <Activity />, color: 'text-blue-500' },
                 ].map((stat, i) => (
@@ -42,7 +101,6 @@ const Dashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column: Today's Schedule (Timeline View) */}
                 <div className="lg:col-span-2 space-y-6">
                     <div className="bg-white rounded-3xl border border-border-muted shadow-sm overflow-hidden">
                         <div className="p-6 border-b border-border-muted flex justify-between items-center">
@@ -52,30 +110,35 @@ const Dashboard = () => {
                             <span className="text-xs font-bold text-primary">View Full Calendar →</span>
                         </div>
                         <div className="p-6 space-y-4">
-                            {[
-                                { time: '09:00 AM', client: 'Alex Johnson', service: 'Full Grooming', status: 'In Progress' },
-                                { time: '10:30 AM', client: 'Sarah Miller', service: 'Beard Trim', status: 'Upcoming' },
-                                { time: '01:00 PM', client: 'Michael Scott', service: 'Haircut', status: 'Upcoming' },
-                            ].map((appt, i) => (
-                                <div key={i} className="flex gap-4 group">
-                                    <div className="w-16 text-[10px] font-black text-brandDark/30 py-2">{appt.time}</div>
-                                    <div className="flex-1 bg-neutralWarm/40 p-4 rounded-2xl border border-border-muted group-hover:border-primary/30 transition-all flex justify-between items-center">
-                                        <div>
-                                            <p className="text-sm font-bold text-brandDark">{appt.client}</p>
-                                            <p className="text-xs text-brandDark/50">{appt.service}</p>
+                            {schedule.length > 0 ? (
+                                schedule.map((appt, i) => (
+                                    <div key={appt.id || i} className="flex gap-4 group">
+                                        <div className="w-16 text-[10px] font-black text-brandDark/30 py-2">
+                                            {appt.time}
                                         </div>
-                                        <span className={`text-[9px] font-black px-2 py-1 rounded-lg uppercase ${
-                                            appt.status === 'In Progress' ? 'bg-secondary text-brandDark' : 'bg-neutralCool text-brandDark/40'
-                                        }`}>
-                                            {appt.status}
-                                        </span>
+                                        <div className="flex-1 bg-neutralWarm/40 p-4 rounded-2xl border border-border-muted group-hover:border-primary/30 transition-all flex justify-between items-center">
+                                            <div>
+                                                <p className="text-sm font-bold text-brandDark">{appt.customer_name}</p>
+                                                <p className="text-xs text-brandDark/50">{appt.date}</p>
+                                                <p className="text-xs text-brandDark/50">{appt.date} Confirmed</p>
+                                            </div>
+                                            <span className={`text-[9px] font-black px-2 py-1 rounded-lg uppercase bg-neutralCool text-brandDark/40`}>
+                                                Confirmed
+                                            </span>
+                                            <button 
+                                                onClick={() => handleCancel(appt.id)}
+                                                className="text-red-400 hover:text-red-600 p-2"
+                                            >
+                                                <XCircle size={16} />
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            ) : (
+                                <p className="text-center text-brandDark/30 py-10 font-bold">No appointments for today.</p>
+                            )}
                         </div>
                     </div>
-
-                    {/* Analytics Snapshot */}
                     <div className="bg-brandDark p-6 rounded-3xl shadow-xl text-brandDark/10">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-bold flex items-center gap-2"><TrendingUp size={18} className="text-secondary" /> Weekly Growth</h3>
@@ -94,10 +157,7 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </div>
-
-                {/* Right Column: Alerts & Overview */}
                 <div className="space-y-6">
-                    {/* Appointment Overview (Mini Stats) */}
                     <div className="bg-white p-6 rounded-3xl border border-border-muted shadow-sm">
                         <h3 className="text-xs font-black text-brandDark/30 uppercase tracking-widest mb-4">Daily Overview</h3>
                         <div className="space-y-3">
@@ -117,8 +177,6 @@ const Dashboard = () => {
                             </div>
                         </div>
                     </div>
-
-                    {/* Notifications & Alerts */}
                     <div className="bg-white rounded-3xl border border-border-muted shadow-sm overflow-hidden">
                         <div className="p-4 bg-primary text-white font-bold text-xs flex items-center gap-2">
                             <AlertCircle size={14} /> Critical Alerts (2)
@@ -134,7 +192,6 @@ const Dashboard = () => {
                             </div>
                         </div>
                     </div>
-                    {/* Quick Actions Panel */}
                     <div className="bg-white p-6 rounded-3xl border border-border-muted shadow-sm mt-6">
                         <h3 className="text-xs font-black text-brandDark/30 uppercase tracking-widest mb-4">Quick Actions</h3>
                         <div className="grid grid-cols-2 gap-3">
@@ -148,8 +205,6 @@ const Dashboard = () => {
                             </button>
                         </div>
                     </div>
-
-                    {/* Analytics Snapshot: Customer Retention */}
                     <div className="bg-white p-6 rounded-3xl border border-border-muted shadow-sm mt-6">
                         <h3 className="text-xs font-black text-brandDark/30 uppercase tracking-widest mb-4">Customer Snapshot</h3>
                         <div className="flex items-center justify-between mb-2">
